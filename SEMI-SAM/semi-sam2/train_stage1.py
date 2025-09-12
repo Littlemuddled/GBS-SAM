@@ -27,10 +27,9 @@ def train_stage1():
     # ==== 配置路径 ====
     checkpoint_path = r"../checkpoints/sam2.1_hiera_small.pt"
     model_cfg = r"configs/sam2.1_hiera_s.yaml"
-    # data_dir = "E:/dataset/ISIC2016"
+    # data_dir = r"E:\dataset\GB_SEMI_SAM\ISIC2016_SEMI\stage1"
+    # data_dir = r"E:\dataset\GB_SEMI_SAM\COVID_SEMI\stage1"
     data_dir = r"E:\dataset\GB_SEMI_SAM\SPINE_SEMI\stage1"
-    data_dir = r"E:\dataset\GB_SEMI_SAM\ISIC2016_SEMI\stage1"
-    data_dir = r"E:\dataset\GB_SEMI_SAM\COVID_SEMI\stage1"
 
     images_dir_train = os.path.join(data_dir, 'train', 'images')
     masks_dir_train = os.path.join(data_dir, 'train', 'masks')
@@ -40,10 +39,9 @@ def train_stage1():
     masks_dir_val = os.path.join(data_dir, "val", "masks")
     json_dir_val = os.path.join(data_dir, "val", "mask_points.json")
 
-
+    # save_dir = "result_semi/semi_ISIC_1"
+    # save_dir = "result_semi/semi_COVID_1"
     save_dir = "result_semi/semi_spine_1"
-    save_dir = "result_semi/semi_ISIC_1"
-    save_dir = "result_semi/semi_COVID_1"
     csv_path = os.path.join(save_dir, "metrics_1.csv")
     os.makedirs(save_dir, exist_ok=True)
     os.makedirs(os.path.dirname(csv_path), exist_ok=True)
@@ -67,7 +65,7 @@ def train_stage1():
 
     # 训练参数
     accumulation_steps = 4
-    num_epochs = 50
+    num_epochs = 20
     steps_per_epoch = len(train_data_list)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_epochs * steps_per_epoch / accumulation_steps, eta_min=1e-6)
 
@@ -75,7 +73,7 @@ def train_stage1():
     source_feature_bank = deque(maxlen=225)  # 存储high_res_features，最大长度605
     source_prompt_bank = deque(maxlen=225 * 1)  # 存储提示特征
 
-    patience = 10 * steps_per_epoch
+    patience = 5 * steps_per_epoch
     counter = 0
     global_step = 0
     best_val_iou, best_val_dice = 0.0, 0.0
@@ -225,4 +223,5 @@ def train_stage1():
     vis_evaluate(save_dir, steps_list, loss_list, iou_list, dice_list, val_iou_list, val_dice_list, val_precision_list, val_recall_list, val_f1_list)
 
 if __name__ == '__main__':
+
     train_stage1()
