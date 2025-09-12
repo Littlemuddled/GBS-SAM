@@ -26,8 +26,6 @@ def train_stage2():
     model_cfg = r"configs\sam2.1_hiera_s.yaml"
     data_dir_1 = r"E:\dataset\GB_SEMI_SAM\SPINE_SEMI\stage1"
     data_dir = r"E:\dataset\GB_SEMI_SAM\SPINE_SEMI\stage2"
-    data_dir = r"E:\dataset\GB_SEMI_SAM\ISIC2016_SEMI\stage2"
-    data_dir = r"E:\dataset\GB_SEMI_SAM\COVID_SEMI\stage2"
 
     images_dir_train = os.path.join(data_dir_1, 'train', 'images')
     masks_dir_train = os.path.join(data_dir_1, 'train', 'masks')
@@ -43,8 +41,6 @@ def train_stage2():
 
 
     save_dir = "result_semi/semi_spine_2"
-    save_dir = "result_semi/semi_ISIC_2"
-    save_dir = "result_semi/semi_COVID_2"
     csv_path = os.path.join(save_dir, "metrics_2.csv")
     os.makedirs(save_dir, exist_ok=True)
     os.makedirs(os.path.dirname(csv_path), exist_ok=True)
@@ -53,8 +49,6 @@ def train_stage2():
         writer.writerow(['Epoch', 'Val Dice', 'Val IoU', 'Val Precision', 'Val Recall', 'Val F1'])
 
     stage1_path = "result_semi/semi_spine_1"
-    stage1_path = "result_semi/semi_ISIC_1"
-    stage1_path = "result_semi/semi_COVID_1"
 
     # 加载源域特征
     source_feature_bank = torch.load(os.path.join(stage1_path, "best_val_feature_bank.pt"))
@@ -271,22 +265,11 @@ def train_stage2():
     vis_evaluate(save_dir, steps_list, loss_list, iou_list, dice_list, val_iou_list, val_dice_list, val_precision_list, val_recall_list, val_f1_list)
 
 
-def visualize_pixel_matrix(pixel_matrix, title='gray Image'):
-    plt.figure(figsize=(6, 3))
-    plt.imshow(pixel_matrix, cmap='gray')
-    plt.title(title)
-    plt.axis('off')
-    plt.show()
-
-def show_image(image):
-    plt.figure(figsize=(10, 10))
-    plt.imshow(image)
-    plt.axis('on')
-    plt.show()
 
 if __name__ == '__main__':
     start_time = time.time()
     train_stage2()
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
+
     print(f"Total time {total_time_str}")
