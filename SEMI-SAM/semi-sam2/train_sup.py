@@ -26,12 +26,8 @@ def load_test_data_from_json(json_path):
 def train_stage1():
     # ==== 配置路径 ====
     checkpoint_path = r"../checkpoints/sam2.1_hiera_small.pt"
-    # checkpoint_path = r"../checkpoints/sam2.1_hiera_large.pt"
     model_cfg = r"configs/sam2.1_hiera_s.yaml"
-    # model_cfg = r"configs/sam2.1_hiera_l.yaml"
     data_dir = r"E:\dataset\GB_SUP_SAM\SPINE_SUP"
-    data_dir = r"E:\dataset\GB_SUP_SAM\ISIC2016_SUP"
-    data_dir = r"E:\dataset\GB_SUP_SAM\COVID_SUP"
 
     images_dir_train = os.path.join(data_dir, 'train', 'images')
     masks_dir_train = os.path.join(data_dir, 'train', 'masks')
@@ -42,8 +38,6 @@ def train_stage1():
     json_dir_val = os.path.join(data_dir, "val", "mask_points.json")
 
     save_dir = "result_sup/sup_spine"
-    save_dir = "result_sup/sup_ISIC"
-    save_dir = "result_sup/sup_COVID"
     csv_path = os.path.join(save_dir, "metrics.csv")
     os.makedirs(save_dir, exist_ok=True)
     os.makedirs(os.path.dirname(csv_path), exist_ok=True)
@@ -207,4 +201,5 @@ def train_stage1():
     vis_evaluate(save_dir, steps_list, loss_list, iou_list, dice_list, val_iou_list, val_dice_list, val_precision_list, val_recall_list, val_f1_list)
 
 if __name__ == '__main__':
+
     train_stage1()
