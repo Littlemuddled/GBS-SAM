@@ -526,6 +526,36 @@ def evaluate_validation_set(predictor, val_data_list):
             total_f1 / max(1, count))
 
 
+def compute_mmd(x, y, kernel='rbf', sigma=1.0):
+    """
+    计算 MMD 损失 (Maximum Mean Discrepancy)
+    x: [N, C] 或 [C]，目标特征
+    y: [M, C] 或 [C]，源特征
+    """
+    if x.dim() == 1:
+        x = x.unsqueeze(0)  # [1, C]
+    if y.dim() == 1:
+        y = y.unsqueeze(0)  # [1, C]
+
+    xx = torch.mm(x, x.t())  # [N, N]
+    yy = torch.mm(y, y.t())  # [M, M]
+    xy = torch.mm(x, y.t())  # [N, M]
+
+    rx = (xx.diag().unsqueeze(0).expand_as(xx))
+    ry = (yy.diag().unsqueeze(0).expand_as(yy))
+
+    # RBF kernel
+    K_xx = torch.exp(- (rx.t() + rx - 2*xx) / (2*sigma**2))
+    K_yy = torch.exp(- (ry.t() + ry - 2*yy) / (2*sigma**2))
+    K_xy = torch.exp(- (rx.t() + ry - 2*xy) / (2*sigma**2))
+
+    mmd = K_xx.mean() + K_yy.mean() - 2*K_xy.mean()
+    return mmd
+
+
+
+
+
 # ==== 边界损失 ====
 def boundary_loss(pred, gt):
     # 横向梯度：W 方向变化
@@ -664,3 +694,4 @@ def vis_evaluate(save_dir, steps_list, loss_list, train_iou_list, train_dice_lis
     plt.grid()
     plt.savefig(os.path.join(save_dir, "val_metrics_curve.png"))
     plt.close()
+
