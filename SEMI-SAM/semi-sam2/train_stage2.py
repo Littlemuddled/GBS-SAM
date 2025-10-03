@@ -13,7 +13,7 @@ from collections import deque
 from finch import FINCH
 from sam2.build_sam import build_sam2
 from sam2.sam2_image_predictor import SAM2ImagePredictor
-from tool import read_batch, generate_pseudo_labels, boundary_loss, evaluate_validation_set, vis_evaluate, Matching_Loss, load_image_mask_points
+from tool import read_batch, generate_pseudo_labels, boundary_loss, compute_mmd, evaluate_validation_set, vis_evaluate, Matching_Loss, load_image_mask_points
 
 np.random.seed(0)
 
@@ -24,8 +24,18 @@ def train_stage2():
     # ==== 配置路径 ====
     checkpoint_path = r"../checkpoints\sam2.1_hiera_small.pt"
     model_cfg = r"configs\sam2.1_hiera_s.yaml"
+
+
     data_dir_1 = r"E:\dataset\GB_SEMI_SAM\SPINE_SEMI\stage1"
+    data_dir_1 = r"E:\dataset\GB_SEMI_SAM\ISIC2016_SEMI\stage1"
+    data_dir_1 = r"E:\dataset\GB_SEMI_SAM\COVID_SEMI\stage1"
+    data_dir_1 = r"E:\dataset\GB_SEMI_SAM\SPINE_SEMI_1_10\stage1"
+
+
     data_dir = r"E:\dataset\GB_SEMI_SAM\SPINE_SEMI\stage2"
+    data_dir = r"E:\dataset\GB_SEMI_SAM\ISIC2016_SEMI\stage2"
+    data_dir = r"E:\dataset\GB_SEMI_SAM\COVID_SEMI\stage2"
+    data_dir = r"E:\dataset\GB_SEMI_SAM\SPINE_SEMI_1_10\stage2"
 
     images_dir_train = os.path.join(data_dir_1, 'train', 'images')
     masks_dir_train = os.path.join(data_dir_1, 'train', 'masks')
@@ -41,6 +51,9 @@ def train_stage2():
 
 
     save_dir = "result_semi/semi_spine_2"
+    save_dir = "result_semi/semi_ISIC_2"
+    save_dir = "result_semi/semi_COVID_2"
+    save_dir = "result_semi/semi_spine_1_10_2"
     csv_path = os.path.join(save_dir, "metrics_2.csv")
     os.makedirs(save_dir, exist_ok=True)
     os.makedirs(os.path.dirname(csv_path), exist_ok=True)
@@ -49,6 +62,9 @@ def train_stage2():
         writer.writerow(['Epoch', 'Val Dice', 'Val IoU', 'Val Precision', 'Val Recall', 'Val F1'])
 
     stage1_path = "result_semi/semi_spine_1"
+    stage1_path = "result_semi/semi_ISIC_1"
+    stage1_path = "result_semi/semi_COVID_1"
+    stage1_path = "result_semi/semi_spine_1_10_1"
 
     # 加载源域特征
     source_feature_bank = torch.load(os.path.join(stage1_path, "best_val_feature_bank.pt"))
@@ -161,7 +177,13 @@ def train_stage2():
                 sims = F.cosine_similarity(tgt_feat.unsqueeze(0), source_feature_bank, dim=1)
                 # # 特征蒸馏损失
                 nearest_feat = source_feature_bank[sims.argmax()]  # 最近的源特征
-                distill_loss = F.mse_loss(tgt_feat, nearest_feat)  # MSE损失
+                # align_loss = F.mse_loss(tgt_feat, nearest_feat)  # MSE损失  TODO
+                align_loss = compute_mmd(  # MMD 损失
+                    tgt_feat.unsqueeze(0),  # [1, C]
+                    source_feature_bank,  # [N, C]
+                    kernel='rbf',
+                    sigma=1.0
+                )
 
                 # topk_indices = torch.topk(sims, k=3).indices
                 # nearest_feats = source_feature_bank[topk_indices]  # [k, C]
@@ -200,7 +222,7 @@ def train_stage2():
                 dice = dice / max(1, num_instances)
                 score_loss = torch.abs(prd_scores[:, 0] - iou).mean()
                 bound_loss /= max(1, num_instances)
-                loss = seg_loss + dice_loss + 0.05 * score_loss + 0.1 * bound_loss + 0.1 * loss_match + 0.1 * distill_loss  # 总损失
+                loss = seg_loss + dice_loss + 0.05 * score_loss + 0.1 * bound_loss + 0.1 * loss_match + 0.1 * align_loss  # 总损失
 
             loss = loss / accumulation_steps
             scaler.scale(loss).backward()
@@ -265,11 +287,22 @@ def train_stage2():
     vis_evaluate(save_dir, steps_list, loss_list, iou_list, dice_list, val_iou_list, val_dice_list, val_precision_list, val_recall_list, val_f1_list)
 
 
+def visualize_pixel_matrix(pixel_matrix, title='gray Image'):
+    plt.figure(figsize=(6, 3))
+    plt.imshow(pixel_matrix, cmap='gray')
+    plt.title(title)
+    plt.axis('off')
+    plt.show()
+
+def show_image(image):
+    plt.figure(figsize=(10, 10))
+    plt.imshow(image)
+    plt.axis('on')
+    plt.show()
 
 if __name__ == '__main__':
     start_time = time.time()
     train_stage2()
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
-
     print(f"Total time {total_time_str}")
