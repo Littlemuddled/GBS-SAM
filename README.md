@@ -1,2 +1,2 @@
-# GBS_SAM
-Granular-Ball Prompting: A Granular-matrix Feature based Semi-Supervised Framework of SAM2 for Medical Image Segmentation
+# GMS_SAM
+Granular-Matrix Prompting: A Semi-Supervised SAM2 Framework for Medical Image Segmentation
